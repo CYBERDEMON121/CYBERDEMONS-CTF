@@ -1,0 +1,64 @@
+services:
+  vulnweb:
+    build: .
+    container_name: vulnweb
+    ports:
+      - "5000:5000"
+    volumes:
+      - uploads:/app/uploads
+    restart: unless-stopped
+
+  # MySQL for SQLmap testing
+  mysql:
+    image: mysql:5.7
+    container_name: vulnweb-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: vulnapp
+      MYSQL_USER: vulnuser
+      MYSQL_PASSWORD: vulnpass
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+
+  # FTP server for testing
+  ftp:
+    image: fauria/vsftpd
+    container_name: vulnweb-ftp
+    environment:
+      FTP_USER: ftpuser
+      FTP_PASS: ftppass123
+    ports:
+      - "21:21"
+    restart: unless-stopped
+
+  # SSH server for Hydra testing
+  ssh:
+    image: lscr.io/linuxserver/openssh-server
+    container_name: vulnweb-ssh
+    environment:
+      PUID: 1000
+      PGID: 1000
+      USER_NAME: sshuser
+      USER_PASS: sshpass123
+    ports:
+      - "2222:2222"
+    restart: unless-stopped
+
+  # Vulnerable WordPress for WPScan testing
+  wordpress:
+    image: wordpress:latest
+    container_name: vulnweb-wordpress
+    environment:
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_USER: vulnuser
+      WORDPRESS_DB_PASSWORD: vulnpass
+      WORDPRESS_DB_NAME: wordpress
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+    restart: unless-stopped
+
+volumes:
+  uploads:
